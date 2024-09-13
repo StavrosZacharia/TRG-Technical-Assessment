@@ -1,0 +1,38 @@
+def PROJECT = "flask-hello-world"
+def STAGE
+def BUILD_NUMBER = env.BUILD_NUMBER
+
+node(){
+    try {
+
+        stage("Checkout"){
+            STAGE = env.STAGE_NAME
+            cleanWs()
+            checkout scm
+        }
+
+        stage("Dockerization") {
+            sh"""
+                docker build -t ${PROJECT} .
+            """
+        }
+
+        stage ("Push to DockerHub") {
+            withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                sh """
+                    echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                    docker tag ${PROJECT} stazac/${PROJECT}:latest
+                    docker push ${PROJECT}:latest
+                    docker push ${PROJECT}:${BUILD_NUMBER}
+                    docker rmi ${PROJECT}:${BUILD_NUMBER} ${PROJECT}:latest || true
+                """
+            }
+        }
+
+
+    } catch (Exception e) {
+        println "Failed at stage:$STAGE"
+        echo e.getMessage()
+        currentBuild.result = "FAILURE"
+    }
+}
