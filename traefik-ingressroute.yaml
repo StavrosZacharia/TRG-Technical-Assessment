@@ -7,10 +7,10 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: PathPrefix(`/`)
+    - match: Host(`localhost`) || PathPrefix(`/`)
       kind: Rule
       services:
         - name: flask-hello-world
           port: 8080
-      middlewares:
-        - name: ip-whitelist
+      # middlewares:
+      #   - name: ip-whitelist
