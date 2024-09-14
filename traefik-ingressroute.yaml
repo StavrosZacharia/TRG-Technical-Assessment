@@ -12,3 +12,5 @@ spec:
       services:
         - name: flask-hello-world
           port: 8080
+      middlewares:
+        - name: ip-whitelist

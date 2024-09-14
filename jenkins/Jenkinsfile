@@ -2,6 +2,7 @@ def PROJECT = "flask-hello-world"
 def STAGE
 def BUILD_NUMBER = env.BUILD_NUMBER
 
+
 node(){
     try {
 
@@ -30,17 +31,23 @@ node(){
         }
 
         stage("Update Helm Chart") {
-            withCredentials([usernamePassword(credentialsId: 'helm-secret', passwordVariable: 'HELM_PASSWORD', usernameVariable: 'HELM_USERNAME')]) {
-                sh """
-                    helm upgrade ${PROJECT} ./helm -n default --set image.repository=stazac/${PROJECT},image.tag=${BUILD_NUMBER}
-                """
+            withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                withCredentials([usernamePassword(credentialsId: 'helm-secret', passwordVariable: 'HELM_PASSWORD', usernameVariable: 'HELM_USERNAME')]) {
+                    sh """
+                        helm upgrade ${PROJECT} ./helm -n default --set image.repository=stazac/${PROJECT},image.tag=${BUILD_NUMBER}
+                    """
+                }
             }
         }
 
         stage("Update Kubernetes Deployment") {
-            sh """
-                kubectl rollout restart deployment/${PROJECT} -n default
-            """
+            withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                withCredentials([usernamePassword(credentialsId: 'helm-secret', passwordVariable: 'HELM_PASSWORD', usernameVariable: 'HELM_USERNAME')]) {
+                    sh """
+                        kubectl rollout restart deployment/${PROJECT} -n default
+                    """
+                }
+            }
         }
 
     } catch (Exception e) {
