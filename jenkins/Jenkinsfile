@@ -22,9 +22,9 @@ node(){
                 sh """
                     echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
                     docker tag ${PROJECT} stazac/${PROJECT}:latest
-                    docker push ${PROJECT}:latest
-                    docker push ${PROJECT}:${BUILD_NUMBER}
-                    docker rmi ${PROJECT}:${BUILD_NUMBER} ${PROJECT}:latest || true
+                    docker push stazac/${PROJECT}:latest
+                    docker push stazac/${PROJECT}:${BUILD_NUMBER}
+                    docker rmi stazac/${PROJECT}:${BUILD_NUMBER} stazac/${PROJECT}:latest || true
                 """
             }
         }
