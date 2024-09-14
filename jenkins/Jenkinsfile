@@ -13,7 +13,7 @@ node(){
 
         stage("Dockerization") {
             sh"""
-                docker build -t ${PROJECT} .
+                docker build -t stazac/${PROJECT} .
             """
         }
 
