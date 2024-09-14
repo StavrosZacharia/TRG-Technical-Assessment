@@ -1,0 +1,14 @@
+name: flask-hello-world
+
+replicas: 1
+
+image:
+  repository: stazac/flask-hello-world
+  tag: latest
+
+containerPort: 8080
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30001

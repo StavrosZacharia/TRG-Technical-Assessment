@@ -13,15 +13,15 @@ node(){
 
         stage("Dockerization") {
             sh"""
-                docker build -t stazac/${PROJECT} .
+                docker build -t stazac/${PROJECT}:${BUILD_NUMBER} .
             """
         }
 
-        stage ("Push to DockerHub") {
+        stage("Push to DockerHub") {
             withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                 sh """
-                    echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                    docker tag ${PROJECT} stazac/${PROJECT}:latest
+                    echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin
+                    docker tag stazac/${PROJECT}:${BUILD_NUMBER} stazac/${PROJECT}:latest
                     docker push stazac/${PROJECT}:latest
                     docker push stazac/${PROJECT}:${BUILD_NUMBER}
                     docker rmi stazac/${PROJECT}:${BUILD_NUMBER} stazac/${PROJECT}:latest || true
@@ -29,6 +29,19 @@ node(){
             }
         }
 
+        stage("Update Helm Chart") {
+            withCredentials([usernamePassword(credentialsId: 'helm-secret', passwordVariable: 'HELM_PASSWORD', usernameVariable: 'HELM_USERNAME')]) {
+                sh """
+                    helm upgrade ${PROJECT} ./helm -n default --set image.repository=stazac/${PROJECT},image.tag=${BUILD_NUMBER}
+                """
+            }
+        }
+
+        stage("Update Kubernetes Deployment") {
+            sh """
+                kubectl rollout restart deployment/${PROJECT} -n default
+            """
+        }
 
     } catch (Exception e) {
         println "Failed at stage:$STAGE"
